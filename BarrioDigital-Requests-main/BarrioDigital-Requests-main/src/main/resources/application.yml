@@ -1,0 +1,63 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ms-barriodigital-requests
+  datasource:
+    url: jdbc:h2:mem:requestsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_AUTO_STARTUP:false}
+        acknowledge-mode: manual
+        prefetch: 1
+        default-requeue-rejected: false
+
+# Configuración centralizada de RabbitMQ para el microservicio de trámites
+barriodigital:
+  rabbitmq:
+    exchanges:
+      main: ${RABBIT_MAIN_EXCHANGE:barriodigital.main.exchange}
+      dlx: ${RABBIT_DLX_EXCHANGE:barriodigital.dlx.exchange}
+    queues:
+      notifications: ${RABBIT_QUEUE_NOTIFICATIONS:barriodigital.notifications.queue}
+      notifications-dlq: ${RABBIT_QUEUE_NOTIFICATIONS_DLQ:barriodigital.notifications.dlq}
+      tickets: ${RABBIT_QUEUE_TICKETS:barriodigital.tickets.queue}
+      tickets-dlq: ${RABBIT_QUEUE_TICKETS_DLQ:barriodigital.tickets.dlq}
+      status: ${RABBIT_QUEUE_STATUS:barriodigital.status.queue}
+      status-dlq: ${RABBIT_QUEUE_STATUS_DLQ:barriodigital.status.dlq}
+    routing-keys:
+      notification-created: request.notification.created
+      notification-updated: request.notification.updated
+      ticket-generate: request.ticket.generate
+      status-changed: request.status.changed
+      dlq-notifications: dlq.request.notifications
+      dlq-tickets: dlq.request.tickets
+      dlq-status: dlq.request.status
+
+catalog:
+  service:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

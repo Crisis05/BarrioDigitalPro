@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # BROKER DE MENSAJERÍA RABBITMQ
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: barriodigital-rabbitmq
+    ports:
+      - "5672:5672"     # Puerto AMQP
+      - "15672:15672"   # Consola Web de Administración (guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - barriodigital-net
+
+  # ==========================================
+  # MICROSERVICIO ADMINISTRADOR DE RABBITMQ (PORT 8083)
+  # ==========================================
+  ms-barriodigital-admin:
+    build:
+      context: ./BarrioDigital-Admin-main/BarrioDigital-Admin-main
+      dockerfile: Dockerfile
+    container_name: ms-barriodigital-admin
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - barriodigital-net
+
+  # ==========================================
+  # MICROSERVICIO DE TRÁMITES Y EVENTOS (PORT 8081)
+  # ==========================================
+  ms-barriodigital-requests:
+    build:
+      context: ./BarrioDigital-Requests-main/BarrioDigital-Requests-main
+      dockerfile: Dockerfile
+    container_name: ms-barriodigital-requests
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_AUTO_STARTUP: "true"
+      CATALOG_SERVICE_URL: http://ms-barriodigital-catalog:8082
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - barriodigital-net
+
+  # ==========================================
+  # MICROSERVICIO DE CATÁLOGO Y CUPOS (PORT 8082)
+  # ==========================================
+  ms-barriodigital-catalog:
+    build:
+      context: ./BarrioDigital-Catalog-main/BarrioDigital-Catalog-main
+      dockerfile: Dockerfile
+    container_name: ms-barriodigital-catalog
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+    networks:
+      - barriodigital-net
+
+  # ==========================================
+  # BACKEND FOR FRONTEND (BFF - PORT 8080)
+  # ==========================================
+  ms-barriodigital-bff:
+    build:
+      context: ./BarrioDigital-BFF-main/BarrioDigital-BFF-main
+      dockerfile: Dockerfile
+    container_name: ms-barriodigital-bff
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      REQUESTS_SERVICE_URL: http://ms-barriodigital-requests:8081
+      CATALOG_SERVICE_URL: http://ms-barriodigital-catalog:8082
+      ADMIN_SERVICE_URL: http://ms-barriodigital-admin:8083
+      MOCK_AUTH_ENABLED: "true"
+    depends_on:
+      - ms-barriodigital-requests
+      - ms-barriodigital-catalog
+      - ms-barriodigital-admin
+    networks:
+      - barriodigital-net
+
+  # ==========================================
+  # FRONTEND ANGULAR (PORT 4200)
+  # ==========================================
+  frontend-barriodigital:
+    build:
+      context: ./BarrioDigital-Frontend-main/BarrioDigital-Frontend-main
+      dockerfile: Dockerfile
+    container_name: frontend-barriodigital
+    ports:
+      - "4200:80"
+    depends_on:
+      - ms-barriodigital-bff
+    networks:
+      - barriodigital-net
+
+networks:
+  barriodigital-net:
+    driver: bridge

@@ -1,0 +1,48 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ms-barriodigital-admin
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000ms
+        max-attempts: 3
+
+barriodigital:
+  rabbitmq:
+    exchanges:
+      main: ${RABBIT_MAIN_EXCHANGE:barriodigital.main.exchange}
+      dlx: ${RABBIT_DLX_EXCHANGE:barriodigital.dlx.exchange}
+    queues:
+      notifications: ${RABBIT_QUEUE_NOTIFICATIONS:barriodigital.notifications.queue}
+      notifications-dlq: ${RABBIT_QUEUE_NOTIFICATIONS_DLQ:barriodigital.notifications.dlq}
+      tickets: ${RABBIT_QUEUE_TICKETS:barriodigital.tickets.queue}
+      tickets-dlq: ${RABBIT_QUEUE_TICKETS_DLQ:barriodigital.tickets.dlq}
+      status: ${RABBIT_QUEUE_STATUS:barriodigital.status.queue}
+      status-dlq: ${RABBIT_QUEUE_STATUS_DLQ:barriodigital.status.dlq}
+      catalog-quota: ${RABBIT_QUEUE_CATALOG_QUOTA:barriodigital.catalog-quota.queue}
+      catalog-quota-dlq: ${RABBIT_QUEUE_CATALOG_QUOTA_DLQ:barriodigital.catalog-quota.dlq}
+    routing-keys:
+      notification-created: request.notification.created
+      notification-updated: request.notification.updated
+      ticket-generate: request.ticket.generate
+      status-changed: request.status.changed
+      catalog-quota-decrement: catalog.quota.decrement
+      dlq-notifications: dlq.request.notifications
+      dlq-tickets: dlq.request.tickets
+      dlq-status: dlq.request.status
+      dlq-catalog-quota: dlq.catalog.quota
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
