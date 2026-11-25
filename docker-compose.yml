@@ -23,6 +23,58 @@ services:
       - barriodigital-net
 
   # ==========================================
+  # ARQUITECTURA DE STREAMING APACHE KAFKA
+  # ==========================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: barriodigital-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - barriodigital-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: barriodigital-kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      - zookeeper
+    networks:
+      - barriodigital-net
+
+  # ==========================================
+  # CONSOLA WEB DE ADMINISTRACIÓN KAFKA-UI
+  # ==========================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: barriodigital-kafka-ui
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: barriodigital-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      - kafka
+    networks:
+      - barriodigital-net
+
+  # ==========================================
   # MICROSERVICIO ADMINISTRADOR DE RABBITMQ (PORT 8083)
   # ==========================================
   ms-barriodigital-admin:
@@ -38,9 +90,12 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       rabbitmq:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - barriodigital-net
 
@@ -61,10 +116,13 @@ services:
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
       RABBITMQ_AUTO_STARTUP: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       CATALOG_SERVICE_URL: http://ms-barriodigital-catalog:8082
     depends_on:
       rabbitmq:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - barriodigital-net
 

@@ -2,17 +2,21 @@ package cl.duoc.barriodigital.requests.service;
 
 import cl.duoc.barriodigital.requests.dto.CreateRequestDto;
 import cl.duoc.barriodigital.requests.dto.UpdateStatusDto;
+import cl.duoc.barriodigital.requests.dto.kafka.KafkaMetricEventDto;
+import cl.duoc.barriodigital.requests.dto.kafka.KafkaRequestEventDto;
 import cl.duoc.barriodigital.requests.event.RequestCreatedEvent;
 import cl.duoc.barriodigital.requests.event.RequestStatusChangedEvent;
 import cl.duoc.barriodigital.requests.model.Request;
 import cl.duoc.barriodigital.requests.model.RequestAuditLog;
 import cl.duoc.barriodigital.requests.model.RequestStatus;
 import cl.duoc.barriodigital.requests.publisher.RequestEventPublisher;
+import cl.duoc.barriodigital.requests.publisher.kafka.KafkaStreamingProducer;
 import cl.duoc.barriodigital.requests.repository.RequestAuditLogRepository;
 import cl.duoc.barriodigital.requests.repository.RequestRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -30,6 +34,9 @@ public class RequestService {
     private final RequestRepository requestRepository;
     private final RequestAuditLogRepository auditLogRepository;
     private final RequestEventPublisher eventPublisher;
+
+    @Autowired(required = false)
+    private KafkaStreamingProducer kafkaProducer;
 
     @Value("${catalog.service.url:http://localhost:8082}")
     private String catalogServiceUrl;
@@ -124,6 +131,38 @@ public class RequestService {
             log.warn("No se pudo publicar evento RequestCreated en RabbitMQ (broker offline o simulado): {}", e.getMessage());
         }
 
+        // Publicar eventos a Apache Kafka para Streaming y Analítica en tiempo real (Evaluación 5)
+        if (kafkaProducer != null) {
+            try {
+                // 1. Tópico barriodigital.requests.events
+                kafkaProducer.sendRequestEvent(KafkaRequestEventDto.builder()
+                        .eventId(UUID.randomUUID().toString())
+                        .eventType("REQUEST_CREATED")
+                        .requestId(saved.getId())
+                        .trackingNumber(saved.getTrackingNumber())
+                        .citizenDni(saved.getCitizenDni())
+                        .citizenName(saved.getCitizenName())
+                        .procedureName(saved.getProcedureName())
+                        .previousStatus(null)
+                        .newStatus(saved.getStatus().name())
+                        .performedBy(creator)
+                        .timestamp(LocalDateTime.now())
+                        .build());
+
+                // 2. Tópico barriodigital.analytics.metrics
+                kafkaProducer.sendMetricEvent(KafkaMetricEventDto.builder()
+                        .metricId(UUID.randomUUID().toString())
+                        .metricName("TRAMITE_CREADO")
+                        .procedureName(saved.getProcedureName())
+                        .currentStatus(saved.getStatus().name())
+                        .processingTimeSeconds(0L)
+                        .recordedAt(LocalDateTime.now())
+                        .build());
+            } catch (Exception e) {
+                log.warn("No se pudo publicar en Kafka (broker offline o simulado): {}", e.getMessage());
+            }
+        }
+
         return saved;
     }
 
@@ -210,6 +249,38 @@ public class RequestService {
                     .build());
         } catch (Exception e) {
             log.warn("No se pudo publicar evento RequestStatusChanged en RabbitMQ: {}", e.getMessage());
+        }
+
+        // Publicar eventos a Apache Kafka para Streaming y Analítica en tiempo real (Evaluación 5)
+        if (kafkaProducer != null) {
+            try {
+                // 1. Tópico barriodigital.requests.events
+                kafkaProducer.sendRequestEvent(KafkaRequestEventDto.builder()
+                        .eventId(UUID.randomUUID().toString())
+                        .eventType("REQUEST_STATUS_CHANGED")
+                        .requestId(updated.getId())
+                        .trackingNumber(updated.getTrackingNumber())
+                        .citizenDni(updated.getCitizenDni())
+                        .citizenName(updated.getCitizenName())
+                        .procedureName(updated.getProcedureName())
+                        .previousStatus(previousStatus.name())
+                        .newStatus(newStatus.name())
+                        .performedBy(actor)
+                        .timestamp(LocalDateTime.now())
+                        .build());
+
+                // 2. Tópico barriodigital.analytics.metrics
+                kafkaProducer.sendMetricEvent(KafkaMetricEventDto.builder()
+                        .metricId(UUID.randomUUID().toString())
+                        .metricName("CAMBIO_ESTADO")
+                        .procedureName(updated.getProcedureName())
+                        .currentStatus(newStatus.name())
+                        .processingTimeSeconds(45L)
+                        .recordedAt(LocalDateTime.now())
+                        .build());
+            } catch (Exception e) {
+                log.warn("No se pudo publicar cambio de estado en Kafka: {}", e.getMessage());
+            }
         }
 
         return updated;

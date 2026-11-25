@@ -2,23 +2,47 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
-    password:
+    password: ""
   jpa:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
 
-# Deshabilitar conexión a servicios externos en tests
+barriodigital:
+  rabbitmq:
+    exchanges:
+      main: test.main.exchange
+      dlx: test.dlx.exchange
+    queues:
+      notifications: test.notif.queue
+      notifications-dlq: test.notif.dlq
+      tickets: test.tickets.queue
+      tickets-dlq: test.tickets.dlq
+      status: test.status.queue
+      status-dlq: test.status.dlq
+    routing-keys:
+      notification-created: test.notif.created
+      notification-updated: test.notif.updated
+      ticket-generate: test.ticket.generate
+      status-changed: test.status.changed
+      dlq-notifications: test.dlq.notif
+      dlq-tickets: test.dlq.tickets
+      dlq-status: test.dlq.status
+
 services:
   catalog:
     url: http://localhost:9999
 
+catalog:
+  service:
+    url: http://localhost:9999
+
 logging:
   level:
-    cl.duoc.barriodigital: INFO
-    org.springframework.amqp: OFF
-    com.rabbitmq: OFF
+    root: INFO
+    org.springframework.beans.factory: DEBUG

@@ -39,6 +39,9 @@ public class RequestController {
     @Autowired(required = false)
     private RequestEventPublisher eventPublisher;
 
+    @Autowired(required = false)
+    private cl.duoc.barriodigital.requests.service.kafka.KafkaStreamingService kafkaStreamingService;
+
     @Autowired
     public RequestController(RequestService requestService) {
         this.requestService = requestService;
@@ -117,6 +120,23 @@ public class RequestController {
     @GetMapping("/kpis")
     public ResponseEntity<Map<String, Object>> getKpis() {
         return ResponseEntity.ok(requestService.getKpis());
+    }
+
+    @GetMapping("/streaming/metrics")
+    public ResponseEntity<Map<String, Object>> getStreamingMetrics() {
+        if (kafkaStreamingService == null) {
+            return ResponseEntity.ok(Map.of(
+                    "status", "DISABLED",
+                    "message", "Kafka streaming service no está inicializado",
+                    "totalProcessed", 0,
+                    "metrics", Collections.emptyMap()
+            ));
+        }
+        return ResponseEntity.ok(Map.of(
+                "status", "ACTIVE",
+                "totalEventsProcessed", kafkaStreamingService.getTotalEventsProcessed(),
+                "metricsByProcedure", kafkaStreamingService.getMetricsSummary()
+        ));
     }
 
     @GetMapping("/dlq/events")

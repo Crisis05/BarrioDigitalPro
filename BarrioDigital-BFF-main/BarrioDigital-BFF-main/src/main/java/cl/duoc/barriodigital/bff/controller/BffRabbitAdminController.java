@@ -171,6 +171,105 @@ public class BffRabbitAdminController {
     }
 
     // ==========================================
+    // ADMINISTRACIÓN DE APACHE KAFKA (STREAMING)
+    // ==========================================
+
+    @GetMapping("/kafka/topics")
+    public ResponseEntity<?> getKafkaTopics() {
+        try {
+            String json = restClient.get()
+                    .uri(adminServiceUrl + "/api/admin/kafka/topics")
+                    .retrieve()
+                    .body(String.class);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json != null ? json : "[]");
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Error consultando tópicos Kafka: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "KAFKA_UNAVAILABLE", "message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/kafka/topics")
+    public ResponseEntity<?> createKafkaTopic(@RequestBody Map<String, Object> body) {
+        try {
+            String json = restClient.post()
+                    .uri(adminServiceUrl + "/api/admin/kafka/topics")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(String.class);
+            return ResponseEntity.status(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(json);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).contentType(MediaType.APPLICATION_JSON).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "ERROR_CREATE_KAFKA_TOPIC", "message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/kafka/topics/{name}")
+    public ResponseEntity<?> deleteKafkaTopic(@PathVariable String name) {
+        try {
+            String json = restClient.delete()
+                    .uri(adminServiceUrl + "/api/admin/kafka/topics/" + name)
+                    .retrieve()
+                    .body(String.class);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json != null ? json : "{}");
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "ERROR_DELETE_KAFKA_TOPIC", "message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/kafka/consumer-groups")
+    public ResponseEntity<?> getKafkaConsumerGroups() {
+        try {
+            String json = restClient.get()
+                    .uri(adminServiceUrl + "/api/admin/kafka/consumer-groups")
+                    .retrieve()
+                    .body(String.class);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json != null ? json : "[]");
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "KAFKA_UNAVAILABLE", "message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/kafka/cluster-info")
+    public ResponseEntity<?> getKafkaClusterInfo() {
+        try {
+            String json = restClient.get()
+                    .uri(adminServiceUrl + "/api/admin/kafka/cluster-info")
+                    .retrieve()
+                    .body(String.class);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json != null ? json : "{}");
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "KAFKA_UNAVAILABLE", "message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/kafka/streaming-metrics")
+    public ResponseEntity<?> getKafkaStreamingMetrics() {
+        try {
+            String json = restClient.get()
+                    .uri(requestsServiceUrl + "/api/requests/streaming/metrics")
+                    .retrieve()
+                    .body(String.class);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json != null ? json : "{}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "STREAMING_UNAVAILABLE", "message", e.getMessage()));
+        }
+    }
+
+    // ==========================================
     // PRUEBAS DE MENSAJERÍA Y DEAD LETTER QUEUE (DLQ)
     // ==========================================
 

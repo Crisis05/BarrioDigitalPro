@@ -29,6 +29,32 @@ spring:
         acknowledge-mode: manual
         prefetch: 1
         default-requeue-rejected: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: 1
+      properties:
+        spring.json.add.type.headers: true
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:barriodigital-analytics-group}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "cl.duoc.barriodigital.*"
+
+# Configuración centralizada de tópicos Kafka para Streaming y Analítica
+barriodigital:
+  kafka:
+    topics:
+      requests-events: ${KAFKA_TOPIC_REQUESTS:barriodigital.requests.events}
+      analytics-metrics: ${KAFKA_TOPIC_ANALYTICS:barriodigital.analytics.metrics}
+    consumer-groups:
+      analytics: barriodigital-analytics-group
+      audit: barriodigital-audit-group
 
 # Configuración centralizada de RabbitMQ para el microservicio de trámites
 barriodigital:
