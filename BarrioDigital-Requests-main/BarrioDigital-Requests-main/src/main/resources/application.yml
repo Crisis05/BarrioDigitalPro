@@ -46,7 +46,7 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: "cl.duoc.barriodigital.*"
 
-# Configuración centralizada de tópicos Kafka para Streaming y Analítica
+# Configuración centralizada de Kafka y RabbitMQ para el microservicio de trámites
 barriodigital:
   kafka:
     topics:
@@ -55,9 +55,6 @@ barriodigital:
     consumer-groups:
       analytics: barriodigital-analytics-group
       audit: barriodigital-audit-group
-
-# Configuración centralizada de RabbitMQ para el microservicio de trámites
-barriodigital:
   rabbitmq:
     exchanges:
       main: ${RABBIT_MAIN_EXCHANGE:barriodigital.main.exchange}
