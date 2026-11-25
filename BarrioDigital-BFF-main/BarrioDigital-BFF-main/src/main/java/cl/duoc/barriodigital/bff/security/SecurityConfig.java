@@ -33,13 +33,13 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final JwtKeyProvider jwtKeyProvider;
 
-    @Value("${azure.activedirectory.tenant-id:5970cdb9-bbea-48dd-ad49-c3aacc2c1241}")
+    @Value("${azure.activedirectory.tenant-id:48733629-7ef9-430e-9f2c-4b3f5dbede94}")
     private String tenantId;
 
-    @Value("${security.jwt.issuer:https://login.microsoftonline.com/5970cdb9-bbea-48dd-ad49-c3aacc2c1241/v2.0}")
+    @Value("${security.jwt.issuer:https://login.microsoftonline.com/48733629-7ef9-430e-9f2c-4b3f5dbede94/v2.0}")
     private String expectedIssuer;
 
-    @Value("${security.jwt.audience:api://dca1a06c-9b36-484d-8909-ae95c3f26301}")
+    @Value("${security.jwt.audience:api://e514a85c-e45b-426d-9427-5fd5fef5d24d}")
     private String expectedAudience;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}")

@@ -21,6 +21,7 @@ public class AudienceValidator implements OAuth2TokenValidator<Jwt> {
         if (audience != null && (audience.contains(expectedAudience)
                 || audience.stream().anyMatch(a -> a.contains(expectedAudience)
                     || expectedAudience.contains(a)
+                    || a.contains("e514a85c-e45b-426d-9427-5fd5fef5d24d")
                     || a.contains("dca1a06c-9b36-484d-8909-ae95c3f26301")
                     || a.contains("barriodigital")))) {
             return OAuth2TokenValidatorResult.success();

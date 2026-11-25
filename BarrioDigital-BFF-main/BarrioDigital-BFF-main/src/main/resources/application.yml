@@ -7,13 +7,13 @@ spring:
 
 azure:
   activedirectory:
-    tenant-id: ${AZURE_TENANT_ID:5970cdb9-bbea-48dd-ad49-c3aacc2c1241}
-    client-id: ${AZURE_CLIENT_ID:dca1a06c-9b36-484d-8909-ae95c3f26301}
-    audience: ${AZURE_AUDIENCE:api://dca1a06c-9b36-484d-8909-ae95c3f26301}
+    tenant-id: ${AZURE_TENANT_ID:48733629-7ef9-430e-9f2c-4b3f5dbede94}
+    client-id: ${AZURE_CLIENT_ID:e514a85c-e45b-426d-9427-5fd5fef5d24d}
+    audience: ${AZURE_AUDIENCE:api://e514a85c-e45b-426d-9427-5fd5fef5d24d}
 
 security:
   jwt:
-    issuer: ${JWT_ISSUER:https://login.microsoftonline.com/5970cdb9-bbea-48dd-ad49-c3aacc2c1241/v2.0}
+    issuer: ${JWT_ISSUER:https://login.microsoftonline.com/48733629-7ef9-430e-9f2c-4b3f5dbede94/v2.0}
     audience: ${azure.activedirectory.audience}
   mock-auth:
     enabled: ${MOCK_AUTH_ENABLED:true}
