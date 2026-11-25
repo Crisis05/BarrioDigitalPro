@@ -15,5 +15,5 @@ RUN apk add --no-cache openssl && \
 
 COPY --from=build /app/dist/frontend-barriodigital/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 443
+EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]
